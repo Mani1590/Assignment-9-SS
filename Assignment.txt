@@ -1,0 +1,95 @@
+-- 7. Program
+SELECT p.FirstName+' '+ISNULL(p.MiddleName+' ',' ')+p.LastName AS Employee_Name,
+	e.JobTitle
+	FROM HumanResources.Employee e
+	JOIN Person.Person p ON e.BusinessEntityID=p.BusinessEntityID
+	WHERE e.JobTitle LIKE '%Sales%';
+
+
+-- 6. Program
+SELECT p.FirstName+' '+ISNULL(p.MiddleName+' ',' ')+p.LastName AS Customer_Name,
+	addr.City,
+	soh.SalesOrderNumber AS Order_Number,
+	soh.OrderDate,
+	soh.TotalDue AS Order_Amount
+	FROM Sales.Customer c
+	JOIN Person.Person p ON C.PersonID=P.BusinessEntityID
+	JOIN Sales.SalesOrderHeader soh ON soh.CustomerID=c.CustomerID
+	JOIN Person.Address addr ON addr.AddressID=soh.ShipToAddressID
+	ORDER BY soh.OrderDate;
+
+-- 5. Program
+SELECT soh.SalesOrderNumber AS Order_Number,
+	p.FirstName+' '+ISNULL(p.MiddleName+' ',' ')+p.LastName AS Customer_Name,
+	addr.City,
+	soh.OrderDate,
+	soh.TotalDue AS Purch_Amount
+	FROM Sales.Customer c
+	JOIN Person.Person p ON C.PersonID=P.BusinessEntityID
+	JOIN Sales.SalesOrderHeader soh ON soh.CustomerID=c.CustomerID
+	JOIN Person.Address addr ON addr.AddressID=soh.ShipToAddressID
+	WHERE TotalDue BETWEEN 500 AND 2000;
+
+-- 4. Program
+SELECT st.Name AS TerritoryName,
+    sp.SalesYTD,
+    sp.BusinessEntityID,
+    sp.SalesLastYear AS PrevRepSales
+	FROM Sales.SalesPerson sp
+	JOIN Sales.SalesTerritory st ON sp.TerritoryID = st.TerritoryID
+	ORDER BY st.Name ASC;
+
+-- 3. Program
+SELECT e.JobTitle,
+	p.FirstName+' '+LastName AS Employee_Name,
+	eph.Rate*2080 AS Salary,   --40hr/week*52weeks/year
+	(MAX(eph.Rate) OVER()-eph.Rate)*2080 AS SalaryDiff 
+	FROM HumanResources.Employee e
+	JOIN HumanResources.EmployeePayHistory eph ON eph.BusinessEntityID=e.BusinessEntityID
+	JOIN Person.Person p ON p.BusinessEntityID=e.BusinessEntityID
+	JOIN HumanResources.EmployeeDepartmentHistory edh ON edh.BusinessEntityID=p.BusinessEntityID
+	JOIN HumanResources.Department d ON d.DepartmentID=edh.DepartmentID
+	WHERE d.DepartmentID IN (14)
+	GROUP BY e.JobTitle,p.FirstName,p.LastName,eph.Rate;
+
+-- 2. Program
+SELECT sp.BusinessEntityID AS [Salesperson ID],
+    spPerson.FirstName + ' ' + spPerson.LastName AS [Salesperson Name],
+    custPerson.FirstName + ' ' + custPerson.LastName AS [Customer Name],
+    addr.City AS [Customer City],
+    soh.SalesOrderID AS [Order Number],
+    soh.OrderDate AS [Order Date],
+    soh.TotalDue AS [Order Amount]
+	FROM Sales.SalesPerson sp
+	JOIN Person.Person spPerson ON sp.BusinessEntityID = spPerson.BusinessEntityID
+
+	LEFT JOIN Sales.SalesOrderHeader soh ON sp.BusinessEntityID = soh.SalesPersonID
+
+	LEFT JOIN Sales.Customer cust ON soh.CustomerID = cust.CustomerID
+	LEFT JOIN Person.Person custPerson ON cust.PersonID = custPerson.BusinessEntityID
+
+	LEFT JOIN Person.BusinessEntityAddress bea ON cust.PersonID = bea.BusinessEntityID
+	LEFT JOIN Person.Address addr ON bea.AddressID = addr.AddressID
+
+
+-- 1. Program
+SELECT DISTINCT
+    p.FirstName + ' ' + p.LastName AS CustomerName,
+    addr.City AS Customer_City,
+    pp_s.FirstName + ' ' + pp_s.LastName AS Salesman,
+    addr_s.City AS Salesman_City,
+    sp.CommissionPct 
+	FROM Sales.Customer c
+	JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
+
+	JOIN Person.BusinessEntityAddress bea ON c.StoreID = bea.BusinessEntityID
+	JOIN Person.Address addr ON bea.AddressID = addr.AddressID
+
+	JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+	JOIN Sales.SalesPerson sp ON soh.SalesPersonID = sp.BusinessEntityID
+
+	JOIN Person.Person pp_s ON sp.BusinessEntityID = pp_s.BusinessEntityID
+	JOIN Person.BusinessEntityAddress bea_s ON pp_s.BusinessEntityID = bea_s.BusinessEntityID
+	JOIN Person.Address addr_s ON bea_s.AddressID = addr_s.AddressID
+
+	WHERE sp.CommissionPct > 0.0012 AND addr.City <> addr_s.City;
